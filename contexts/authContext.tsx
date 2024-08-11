@@ -1,14 +1,20 @@
-import { mockUser } from "@/mocks/user";
 import { createContext, useState, type PropsWithChildren } from "react";
-import { AuthenticationType } from "./types/auth";
+import {
+  AuthenticationType,
+  SignInRequestType,
+  SignUpRequestType,
+} from "./types/auth";
+import { decodeToken } from "react-jwt";
 
 const initialAuthValue: AuthenticationType = {
   nickname: null,
   phoneNo: null,
   token: null,
-  gender: "others",
-  status: "none",
+  gender: "M",
+  status: "success",
 };
+
+const baseUrl: string = process.env.EXPO_PUBLIC_URL ?? "http://localhost:3111:";
 
 export const AuthContext = createContext<AuthenticationType>(initialAuthValue);
 
@@ -18,30 +24,42 @@ export function AuthProvider({ children }: PropsWithChildren) {
   });
 
   const signInFn = async (phoneNo: string) => {
-    const url = "";
+    const url = baseUrl + "/auth/login";
 
-    _retrieveData({ ...mockUser, phoneNo: phoneNo });
+    // _retrieveData({ ...mockUser, phoneNo: phoneNo });
     if (process.env.EXPO_PUBLIC_ENV === "MOCK") {
-      setAuthState((prevState) => ({ ...prevState, status: "none" }));
+      setAuthState((prevState) => ({ ...prevState, status: "success" }));
       return;
     }
     try {
+      const signInRequest: SignInRequestType = {
+        phoneNumber: phoneNo,
+      };
       const response = await fetch(url, {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          phoneNo: phoneNo,
-        }),
+        body: JSON.stringify(signInRequest),
       });
       const data = await response.json();
+      const token = data.data.access_token;
+      console.log(data);
+      const decodedData = decodeToken<SignUpRequestType>(token);
 
-      _retrieveData(data);
-      setAuthState((prevState) => ({ ...prevState, status: "no_user" }));
+      setAuthState({
+        phoneNo: phoneNo,
+        nickname: decodedData?.name,
+        gender: decodedData?.gender,
+        birthDate: new Date(decodedData?.birthDate ?? ""),
+        token: token,
+        status: "success",
+      });
+      console.log(authState);
     } catch (e) {
       console.error("error: " + e);
+
       setAuthState((prevState) => {
         return {
           ...prevState,
@@ -58,12 +76,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     phoneNo: string,
     nickname: string,
     birthdate: Date,
-    gender: "male" | "female" | "others"
+    gender: "M" | "F" | "O"
   ) => {
-    const url = "";
-    console.log(
-      `phoneNo = ${phoneNo}, nickname = ${nickname}, birthdate = ${birthdate.toDateString()}, gender = ${gender}`
-    );
+    const url = baseUrl + "/auth/signup";
+    // console.log(
+    //   `phoneNo = ${phoneNo}, nickname = ${nickname}, birthdate = ${birthdate.toDateString()}, gender = ${gender}`
+    // );
     if (process.env.EXPO_PUBLIC_ENV === "MOCK") {
       _retrieveData({
         phoneNo,
@@ -74,29 +92,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
       });
       setAuthState((prevState) => ({
         ...prevState,
-        status: "none",
+        status: "success",
       }));
       return;
     }
     try {
+      const signUpRequest: SignUpRequestType = {
+        phoneNumber: phoneNo,
+        name: nickname,
+        birthDate: birthdate.toDateString(),
+        gender: gender,
+      };
+      console.log(url);
+      console.log(signUpRequest);
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          phoneNo: phoneNo,
-          nickname: nickname,
-          birthdate: birthdate,
-          gender: gender,
-        }),
+        body: JSON.stringify(signUpRequest),
       });
       const data = await response.json();
-
-      _retrieveData(data);
-      setAuthState((prevState) => ({ ...prevState, status: "none" }));
+      console.log(data);
+      // _retrieveData(data);
+      // setAuthState((prevState) => ({ ...prevState, status: "success" }));
     } catch (e) {
+      console.log(e);
       setAuthState((prevState) => {
         return {
           ...prevState,
@@ -120,14 +141,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       });
       return;
     }
-    await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authState.token}`,
-      },
-    });
+    // await fetch(url, {
+    //   method: "POST",
+    //   headers: {
+    //     Accept: "application/json",
+    //     "Content-Type": "application/json",
+    //     Authorization: `Bearer ${authState.token}`,
+    //   },
+    // });
     setAuthState({ ...initialAuthValue });
   };
 

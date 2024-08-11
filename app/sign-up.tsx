@@ -17,9 +17,7 @@ export default function SignUp() {
   const { control, handleSubmit } = useForm();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
-  const [selectedGender, setSelectedGender] = useState<
-    "male" | "female" | "others"
-  >("male");
+  const [selectedGender, setSelectedGender] = useState<"M" | "F" | "O">("M");
   const onSubmit = async (data: FieldValues) => {
     signUp!(data["phoneNo"]!, data["nickname"], selectedDate, selectedGender);
     router.replace("/");
@@ -78,14 +76,14 @@ export default function SignUp() {
         <Text style={styles.label}>Gender *</Text>
         <SmmRadioGroup
           radioButtons={[
-            { id: "male", value: "male", label: "male" },
-            { id: "female", value: "female", label: "female" },
-            { id: "others", value: "others", label: "others" },
+            { id: "M", value: "M", label: "male" },
+            { id: "F", value: "F", label: "female" },
+            { id: "O", value: "O", label: "others" },
           ]}
           onPress={(value) => {
-            if (value === "male") setSelectedGender(value);
-            else if (value === "female") setSelectedGender(value);
-            else setSelectedGender("others");
+            if (value === "M") setSelectedGender(value);
+            else if (value === "F") setSelectedGender(value);
+            else setSelectedGender("O");
           }}
           selectedId={selectedGender}
           labelStyle={styles.radioText}
